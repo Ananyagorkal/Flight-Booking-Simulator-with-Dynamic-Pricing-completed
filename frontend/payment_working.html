@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - Flight Booking Simulator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-credit-card"></i> Payment</h1>
+                <p>Complete your booking</p>
+            </div>
+        </header>
+
+        <main>
+            <div class="payment-container">
+                <div class="booking-summary">
+                    <h2>Booking Summary</h2>
+                    <div id="bookingSummary">
+                        <!-- Booking details will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="payment-form">
+                    <h2>Payment Details</h2>
+                    <form id="paymentForm">
+                        <div class="form-group">
+                            <label for="paymentMethod">Payment Method</label>
+                            <select id="paymentMethod" onchange="togglePaymentDetails()">
+                                <option value="card">Credit/Debit Card</option>
+                                <option value="netbanking">Net Banking</option>
+                                <option value="upi">UPI</option>
+                                <option value="wallet">Wallet</option>
+                            </select>
+                        </div>
+                        
+                        <div id="cardDetails" class="payment-details">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="cardNumber">Card Number</label>
+                                    <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
+                                </div>
+                                <div class="form-group">
+                                    <label for="cardExpiry">Expiry Date</label>
+                                    <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="cardCVV">CVV</label>
+                                    <input type="text" id="cardCVV" placeholder="123" maxlength="4">
+                                </div>
+                                <div class="form-group">
+                                    <label for="cardName">Cardholder Name</label>
+                                    <input type="text" id="cardName" placeholder="John Doe">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="netbankingDetails" class="payment-details" style="display: none;">
+                            <div class="form-group">
+                                <label for="bank">Select Bank</label>
+                                <select id="bank">
+                                    <option value="">Select your bank</option>
+                                    <option value="sbi">State Bank of India</option>
+                                    <option value="hdfc">HDFC Bank</option>
+                                    <option value="icici">ICICI Bank</option>
+                                    <option value="axis">Axis Bank</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div id="upiDetails" class="payment-details" style="display: none;">
+                            <div class="form-group">
+                                <label for="upiId">UPI ID</label>
+                                <input type="text" id="upiId" placeholder="yourname@paytm">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="pay-btn">
+                                <i class="fas fa-lock"></i> Pay ₹<span id="totalAmount">0</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Booking Confirmed!</h2>
+            <div id="bookingDetails">
+                <!-- Booking details will be shown here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let bookingData = null;
+
+        // Load booking data from localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const storedData = localStorage.getItem('bookingData');
+            if (storedData) {
+                bookingData = JSON.parse(storedData);
+                displayBookingSummary();
+                setupEventListeners();
+            } else {
+                alert('No booking data found. Please start over.');
+                window.location.href = 'index_working.html';
+            }
+        });
+
+        // Display booking summary
+        function displayBookingSummary() {
+            if (!bookingData) return;
+            
+            const summary = document.getElementById('bookingSummary');
+            const flight = bookingData.flight;
+            
+            summary.innerHTML = `
+                <div class="summary-item">
+                    <div class="flight-info">
+                        <h3>${flight.flight_number}</h3>
+                        <p>${flight.airline?.name || 'Airline'}</p>
+                    </div>
+                    <div class="route-info">
+                        <div class="airport">
+                            <div class="airport-code">${flight.departure_airport.code}</div>
+                            <div class="airport-name">${flight.departure_airport.name}</div>
+                        </div>
+                        <div class="route-arrow">→</div>
+                        <div class="airport">
+                            <div class="airport-code">${flight.arrival_airport.code}</div>
+                            <div class="airport-name">${flight.arrival_airport.name}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="summary-item">
+                    <span>Passengers:</span>
+                    <span>${bookingData.passengers}</span>
+                </div>
+                <div class="summary-item">
+                    <span>Seat Class:</span>
+                    <span>${bookingData.seatClass}</span>
+                </div>
+                <div class="summary-item">
+                    <span>Passenger:</span>
+                    <span>${bookingData.passengerName}</span>
+                </div>
+                <div class="summary-item total">
+                    <span>Total Amount:</span>
+                    <span>₹${bookingData.finalPrice.toFixed(0)}</span>
+                </div>
+            `;
+            
+            document.getElementById('totalAmount').textContent = bookingData.finalPrice.toFixed(0);
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('paymentForm').addEventListener('submit', handlePayment);
+            
+            // Card number formatting
+            document.getElementById('cardNumber').addEventListener('input', formatCardNumber);
+            document.getElementById('cardExpiry').addEventListener('input', formatCardExpiry);
+            document.getElementById('cardCVV').addEventListener('input', formatCardCVV);
+        }
+
+        // Toggle payment details based on method
+        function togglePaymentDetails() {
+            const method = document.getElementById('paymentMethod').value;
+            
+            // Hide all payment details
+            document.querySelectorAll('.payment-details').forEach(detail => {
+                detail.style.display = 'none';
+            });
+            
+            // Show relevant details
+            if (method === 'card') {
+                document.getElementById('cardDetails').style.display = 'block';
+            } else if (method === 'netbanking') {
+                document.getElementById('netbankingDetails').style.display = 'block';
+            } else if (method === 'upi') {
+                document.getElementById('upiDetails').style.display = 'block';
+            }
+        }
+
+        // Handle payment
+        async function handlePayment(event) {
+            event.preventDefault();
+            
+            const paymentMethod = document.getElementById('paymentMethod').value;
+            
+            // Validate payment details based on method
+            if (paymentMethod === 'card') {
+                const cardNumber = document.getElementById('cardNumber').value;
+                const cardExpiry = document.getElementById('cardExpiry').value;
+                const cardCVV = document.getElementById('cardCVV').value;
+                const cardName = document.getElementById('cardName').value;
+                
+                if (!cardNumber || !cardExpiry || !cardCVV || !cardName) {
+                    alert('Please fill in all card details.');
+                    return;
+                }
+            } else if (paymentMethod === 'netbanking') {
+                const bank = document.getElementById('bank').value;
+                if (!bank) {
+                    alert('Please select a bank.');
+                    return;
+                }
+            } else if (paymentMethod === 'upi') {
+                const upiId = document.getElementById('upiId').value;
+                if (!upiId) {
+                    alert('Please enter your UPI ID.');
+                    return;
+                }
+            }
+            
+            // Simulate payment processing
+            showNotification('Processing payment...', 'info');
+            
+            setTimeout(() => {
+                showNotification('Payment successful!', 'success');
+                showBookingConfirmation();
+            }, 2000);
+        }
+
+        // Show booking confirmation
+        function showBookingConfirmation() {
+            const confirmation = {
+                pnr: 'PNR' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+                booking_reference: 'BK' + Math.random().toString(36).substr(2, 8).toUpperCase(),
+                passenger_name: bookingData.passengerName,
+                passenger_email: bookingData.passengerEmail,
+                passenger_phone: bookingData.passengerPhone,
+                flight_details: bookingData.flight,
+                seat_class: bookingData.seatClass,
+                seat_number: 'A' + Math.floor(Math.random() * 30 + 1),
+                price_paid: bookingData.finalPrice,
+                booking_date: new Date().toISOString(),
+                status: 'CONFIRMED'
+            };
+            
+            const bookingDetails = document.getElementById('bookingDetails');
+            bookingDetails.innerHTML = `
+                <div class="confirmation-details">
+                    <div class="detail-row">
+                        <span>PNR:</span>
+                        <span><strong>${confirmation.pnr}</strong></span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Booking Reference:</span>
+                        <span>${confirmation.booking_reference}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Passenger:</span>
+                        <span>${confirmation.passenger_name}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Email:</span>
+                        <span>${confirmation.passenger_email}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Phone:</span>
+                        <span>${confirmation.passenger_phone}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Flight:</span>
+                        <span>${confirmation.flight_details.flight_number}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Route:</span>
+                        <span>${confirmation.flight_details.departure_airport.code} → ${confirmation.flight_details.arrival_airport.code}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Seat Class:</span>
+                        <span>${confirmation.seat_class}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Seat Number:</span>
+                        <span>${confirmation.seat_number}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Total Paid:</span>
+                        <span><strong>₹${confirmation.price_paid.toFixed(0)}</strong></span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Status:</span>
+                        <span style="color: #28a745;"><strong>${confirmation.status}</strong></span>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('confirmationModal').style.display = 'block';
+        }
+
+        // Format card number
+        function formatCardNumber(event) {
+            let value = event.target.value.replace(/\s/g, '').replace(/[^0-9]/gi, '');
+            let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+            event.target.value = formattedValue;
+        }
+
+        // Format card expiry
+        function formatCardExpiry(event) {
+            let value = event.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            event.target.value = value;
+        }
+
+        // Format card CVV
+        function formatCardCVV(event) {
+            event.target.value = event.target.value.replace(/\D/g, '');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('confirmationModal').style.display = 'none';
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            alert(message);
+        }
+    </script>
+</body>
+</html>

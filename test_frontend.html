@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Search Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        .result { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Flight Search Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Health Check</h2>
+        <button onclick="testHealth()">Test Health</button>
+        <div id="health-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Get Airports</h2>
+        <button onclick="testAirports()">Get Airports</button>
+        <div id="airports-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Search Flights (DEL to BOM)</h2>
+        <button onclick="testSearch()">Search DEL to BOM</button>
+        <div id="search-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 4: Search Flights (JFK to LAX)</h2>
+        <button onclick="testSearch2()">Search JFK to LAX</button>
+        <div id="search2-result" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/api';
+        
+        async function testHealth() {
+            try {
+                const response = await fetch('http://localhost:8000/health');
+                const data = await response.json();
+                document.getElementById('health-result').innerHTML = 
+                    `<strong>Health Check:</strong> ${JSON.stringify(data)}`;
+            } catch (error) {
+                document.getElementById('health-result').innerHTML = 
+                    `<strong>Error:</strong> ${error.message}`;
+            }
+        }
+        
+        async function testAirports() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/flights/airports/`);
+                const data = await response.json();
+                document.getElementById('airports-result').innerHTML = 
+                    `<strong>Airports Found:</strong> ${data.length} airports<br>
+                    <strong>Sample:</strong> ${JSON.stringify(data.slice(0, 3))}`;
+            } catch (error) {
+                document.getElementById('airports-result').innerHTML = 
+                    `<strong>Error:</strong> ${error.message}`;
+            }
+        }
+        
+        async function testSearch() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/flights/search?departure_airport=DEL&arrival_airport=BOM&departure_date=2025-10-13&passengers=1`);
+                const data = await response.json();
+                document.getElementById('search-result').innerHTML = 
+                    `<strong>DEL to BOM Search:</strong><br>
+                    <strong>Flights Found:</strong> ${data.flights ? data.flights.length : 0}<br>
+                    <strong>Response:</strong> ${JSON.stringify(data).substring(0, 500)}...`;
+            } catch (error) {
+                document.getElementById('search-result').innerHTML = 
+                    `<strong>Error:</strong> ${error.message}`;
+            }
+        }
+        
+        async function testSearch2() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/flights/search?departure_airport=JFK&arrival_airport=LAX&departure_date=2025-10-13&passengers=1`);
+                const data = await response.json();
+                document.getElementById('search2-result').innerHTML = 
+                    `<strong>JFK to LAX Search:</strong><br>
+                    <strong>Flights Found:</strong> ${data.flights ? data.flights.length : 0}<br>
+                    <strong>Response:</strong> ${JSON.stringify(data).substring(0, 500)}...`;
+            } catch (error) {
+                document.getElementById('search2-result').innerHTML = 
+                    `<strong>Error:</strong> ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

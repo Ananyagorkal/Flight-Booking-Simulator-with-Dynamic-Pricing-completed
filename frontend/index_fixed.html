@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Booking Simulator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✈️ Flight Booking Simulator</h1>
+            <p>Search and book flights with dynamic pricing</p>
+        </header>
+
+        <main>
+            <!-- Search Form -->
+            <div class="search-section">
+                <form id="searchForm">
+                    <div class="search-grid">
+                        <div class="form-group">
+                            <label for="departureAirport">From</label>
+                            <select id="departureAirport" required>
+                                <option value="">Select departure airport</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="arrivalAirport">To</label>
+                            <select id="arrivalAirport" required>
+                                <option value="">Select arrival airport</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="departureDate">Departure Date</label>
+                            <input type="date" id="departureDate" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="passengers">Passengers</label>
+                            <select id="passengers">
+                                <option value="1">1 Passenger</option>
+                                <option value="2">2 Passengers</option>
+                                <option value="3">3 Passengers</option>
+                                <option value="4">4 Passengers</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="search-btn">
+                        <i class="fas fa-search"></i> Search Flights
+                    </button>
+                </form>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" class="results-section" style="display: none;">
+                <h2>Available Flights</h2>
+                <div id="flightResults" class="flight-results">
+                    <!-- Flight results will be displayed here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/api';
+        let currentFlights = [];
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAirports();
+            setupEventListeners();
+        });
+
+        // Load airports
+        async function loadAirports() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/flights/airports/`);
+                const airports = await response.json();
+                
+                const departureSelect = document.getElementById('departureAirport');
+                const arrivalSelect = document.getElementById('arrivalAirport');
+                
+                airports.forEach(airport => {
+                    const option1 = document.createElement('option');
+                    option1.value = airport.code;
+                    option1.textContent = `${airport.code} - ${airport.name}`;
+                    departureSelect.appendChild(option1);
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = airport.code;
+                    option2.textContent = `${airport.code} - ${airport.name}`;
+                    arrivalSelect.appendChild(option2);
+                });
+            } catch (error) {
+                console.error('Error loading airports:', error);
+                alert('Error loading airports. Please refresh the page.');
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('searchForm').addEventListener('submit', handleSearch);
+        }
+
+        // Handle flight search
+        async function handleSearch(event) {
+            event.preventDefault();
+            
+            const departureAirport = document.getElementById('departureAirport').value;
+            const arrivalAirport = document.getElementById('arrivalAirport').value;
+            const departureDate = document.getElementById('departureDate').value;
+            const passengers = document.getElementById('passengers').value;
+            
+            if (departureAirport === arrivalAirport) {
+                alert('Departure and arrival airports cannot be the same.');
+                return;
+            }
+            
+            if (!departureDate) {
+                alert('Please select a departure date.');
+                return;
+            }
+            
+            try {
+                const queryParams = new URLSearchParams({
+                    departure_airport: departureAirport,
+                    arrival_airport: arrivalAirport,
+                    departure_date: departureDate,
+                    passengers: passengers
+                });
+                
+                const response = await fetch(`${API_BASE_URL}/flights/search?${queryParams}`);
+                const data = await response.json();
+                
+                if (data.flights && data.flights.length > 0) {
+                    currentFlights = data.flights;
+                    displayFlights(data.flights);
+                    document.getElementById('resultsSection').style.display = 'block';
+                } else {
+                    alert('No flights found for your search criteria.');
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                alert('Error searching flights. Please try again.');
+            }
+        }
+
+        // Display flight results
+        function displayFlights(flights) {
+            const resultsContainer = document.getElementById('flightResults');
+            resultsContainer.innerHTML = '';
+            
+            flights.forEach(flight => {
+                const flightCard = document.createElement('div');
+                flightCard.className = 'flight-card';
+                
+                const departureTime = new Date(flight.departure_time).toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                });
+                const arrivalTime = new Date(flight.arrival_time).toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                });
+                
+                flightCard.innerHTML = `
+                    <div class="flight-header">
+                        <div class="flight-info">
+                            <div class="airline-logo">${flight.airline?.code || 'XX'}</div>
+                            <div class="flight-details">
+                                <h3>${flight.flight_number}</h3>
+                                <p>${flight.airline?.name || 'Airline'}</p>
+                            </div>
+                        </div>
+                        <div class="price-section">
+                            <div class="price">₹${flight.current_price.toFixed(0)}</div>
+                            <div class="price-breakdown">per passenger</div>
+                            <button class="book-btn" onclick="bookFlight(${flight.id})">
+                                <i class="fas fa-shopping-cart"></i> Book Now
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flight-route">
+                        <div class="route-info">
+                            <div class="airport">
+                                <div class="airport-code">${flight.departure_airport.code}</div>
+                                <div class="airport-name">${flight.departure_airport.name}</div>
+                                <div class="time">${departureTime}</div>
+                            </div>
+                            
+                            <div class="route-line">
+                                <div class="flight-duration">${flight.duration} min</div>
+                                <div class="route-arrow">→</div>
+                            </div>
+                            
+                            <div class="airport">
+                                <div class="airport-code">${flight.arrival_airport.code}</div>
+                                <div class="airport-name">${flight.arrival_airport.name}</div>
+                                <div class="time">${arrivalTime}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                resultsContainer.appendChild(flightCard);
+            });
+        }
+
+        // Book flight function
+        function bookFlight(flightId) {
+            const flight = currentFlights.find(f => f.id === flightId);
+            if (flight) {
+                alert(`Booking flight ${flight.flight_number} for ₹${flight.current_price.toFixed(0)}`);
+                // Here you would normally open a booking modal or redirect to booking page
+            }
+        }
+    </script>
+</body>
+</html>

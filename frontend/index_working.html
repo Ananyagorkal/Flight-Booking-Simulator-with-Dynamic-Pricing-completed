@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Booking Simulator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-plane"></i> Flight Booking Simulator</h1>
+                <p>Experience dynamic pricing in real-time</p>
+            </div>
+        </header>
+        
+        <!-- Search Section -->
+        <section class="search-section">
+            <div class="search-form">
+                <h2>Search Flights</h2>
+                <form id="searchForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="departureAirport">From</label>
+                            <select id="departureAirport" required>
+                                <option value="">Select departure airport</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="arrivalAirport">To</label>
+                            <select id="arrivalAirport" required>
+                                <option value="">Select arrival airport</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="departureDate">Departure Date</label>
+                            <input type="date" id="departureDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="returnDate">Return Date (Optional)</label>
+                            <input type="date" id="returnDate">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="passengers">Passengers</label>
+                            <select id="passengers">
+                                <option value="1">1 Passenger</option>
+                                <option value="2">2 Passengers</option>
+                                <option value="3">3 Passengers</option>
+                                <option value="4">4 Passengers</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="seatClass">Seat Class</label>
+                            <select id="seatClass">
+                                <option value="economy">Economy</option>
+                                <option value="premium_economy">Premium Economy</option>
+                                <option value="business">Business</option>
+                                <option value="first">First Class</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="couponCode">Coupon Code (Optional)</label>
+                            <div class="coupon-input">
+                                <input type="text" id="couponCode" placeholder="Enter coupon code">
+                                <button type="button" id="checkCouponBtn" class="coupon-btn">
+                                    <i class="fas fa-tag"></i> Check Coupon
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="search-btn">
+                        <i class="fas fa-search"></i> Search Flights
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Available Coupons Section -->
+        <section class="coupons-section">
+            <h3><i class="fas fa-tag"></i> Available Coupons</h3>
+            <div id="availableCoupons" class="coupons-grid">
+                <!-- Coupons will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <section id="resultsSection" class="results-section" style="display: none;">
+            <h2>Available Flights</h2>
+            <div id="flightResults" class="flight-results">
+                <!-- Flight results will be displayed here -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Booking Modal -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Complete Your Booking</h2>
+            <form id="bookingForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="passengerName">Passenger Name</label>
+                        <input type="text" id="passengerName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="passengerEmail">Email</label>
+                        <input type="email" id="passengerEmail" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="passengerPhone">Phone Number</label>
+                        <input type="tel" id="passengerPhone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="passengerCount">Number of Passengers</label>
+                        <select id="passengerCount">
+                            <option value="1">1 Passenger</option>
+                            <option value="2">2 Passengers</option>
+                            <option value="3">3 Passengers</option>
+                            <option value="4">4 Passengers</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="selectedSeatClass">Seat Class</label>
+                    <select id="selectedSeatClass">
+                        <option value="economy">Economy</option>
+                        <option value="premium_economy">Premium Economy</option>
+                        <option value="business">Business</option>
+                        <option value="first">First Class</option>
+                    </select>
+                </div>
+                
+                <div class="price-summary">
+                    <h3>Price Summary</h3>
+                    <div id="priceDetails">
+                        <!-- Price details will be shown here -->
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="book-btn">
+                        <i class="fas fa-credit-card"></i> Proceed to Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Payment Details</h2>
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label for="paymentMethod">Payment Method</label>
+                    <select id="paymentMethod">
+                        <option value="card">Credit/Debit Card</option>
+                        <option value="netbanking">Net Banking</option>
+                        <option value="upi">UPI</option>
+                        <option value="wallet">Wallet</option>
+                    </select>
+                </div>
+                
+                <div id="cardDetails" class="payment-details">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cardNumber">Card Number</label>
+                            <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456">
+                        </div>
+                        <div class="form-group">
+                            <label for="cardExpiry">Expiry Date</label>
+                            <input type="text" id="cardExpiry" placeholder="MM/YY">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cardCVV">CVV</label>
+                            <input type="text" id="cardCVV" placeholder="123">
+                        </div>
+                        <div class="form-group">
+                            <label for="cardName">Cardholder Name</label>
+                            <input type="text" id="cardName" placeholder="John Doe">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="pay-btn">
+                        <i class="fas fa-lock"></i> Pay Now
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Booking Confirmation</h2>
+            <div id="bookingDetails">
+                <!-- Booking details will be shown here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/api';
+        let currentFlights = [];
+        let selectedFlight = null;
+        let currentPricing = null;
+        let appliedCoupon = null;
+        let availableCoupons = [];
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAirports();
+            loadAvailableCoupons();
+            setupEventListeners();
+        });
+
+        // Load airports
+        async function loadAirports() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/flights/airports/`);
+                const airports = await response.json();
+                
+                const departureSelect = document.getElementById('departureAirport');
+                const arrivalSelect = document.getElementById('arrivalAirport');
+                
+                airports.forEach(airport => {
+                    const option1 = document.createElement('option');
+                    option1.value = airport.code;
+                    option1.textContent = `${airport.code} - ${airport.name}`;
+                    departureSelect.appendChild(option1);
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = airport.code;
+                    option2.textContent = `${airport.code} - ${airport.name}`;
+                    arrivalSelect.appendChild(option2);
+                });
+            } catch (error) {
+                console.error('Error loading airports:', error);
+                showNotification('Error loading airports. Please refresh the page.', 'error');
+            }
+        }
+
+        // Load available coupons
+        async function loadAvailableCoupons() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/coupons/`);
+                const data = await response.json();
+                availableCoupons = data.coupons || [];
+                displayCoupons();
+            } catch (error) {
+                console.error('Error loading coupons:', error);
+            }
+        }
+
+        // Display coupons
+        function displayCoupons() {
+            const container = document.getElementById('availableCoupons');
+            container.innerHTML = '';
+            
+            availableCoupons.slice(0, 3).forEach(coupon => {
+                const couponDiv = document.createElement('div');
+                couponDiv.className = 'coupon-card';
+                couponDiv.innerHTML = `
+                    <div class="coupon-code">${coupon.code}</div>
+                    <div class="coupon-description">${coupon.description}</div>
+                    <div class="coupon-terms">Min. ₹${coupon.min_amount} | Max. ₹${coupon.max_discount} off</div>
+                `;
+                container.appendChild(couponDiv);
+            });
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('searchForm').addEventListener('submit', handleSearch);
+            document.getElementById('checkCouponBtn').addEventListener('click', checkCoupon);
+            document.getElementById('bookingForm').addEventListener('submit', handleBooking);
+            document.getElementById('paymentForm').addEventListener('submit', handlePayment);
+            
+            // Modal close buttons
+            document.querySelectorAll('.close').forEach(closeBtn => {
+                closeBtn.addEventListener('click', closeModal);
+            });
+            
+            // Click outside modal to close
+            window.addEventListener('click', function(event) {
+                if (event.target.classList.contains('modal')) {
+                    closeModal();
+                }
+            });
+        }
+
+        // Handle flight search
+        async function handleSearch(event) {
+            event.preventDefault();
+            
+            const departureAirport = document.getElementById('departureAirport').value;
+            const arrivalAirport = document.getElementById('arrivalAirport').value;
+            const departureDate = document.getElementById('departureDate').value;
+            const passengers = document.getElementById('passengers').value;
+            const seatClass = document.getElementById('seatClass').value;
+            
+            if (departureAirport === arrivalAirport) {
+                showNotification('Departure and arrival airports cannot be the same.', 'error');
+                return;
+            }
+            
+            if (!departureDate) {
+                showNotification('Please select a departure date.', 'error');
+                return;
+            }
+            
+            try {
+                const queryParams = new URLSearchParams({
+                    departure_airport: departureAirport,
+                    arrival_airport: arrivalAirport,
+                    departure_date: departureDate,
+                    passengers: passengers,
+                    seat_class: seatClass
+                });
+                
+                const response = await fetch(`${API_BASE_URL}/flights/search?${queryParams}`);
+                const data = await response.json();
+                
+                if (data.flights && data.flights.length > 0) {
+                    currentFlights = data.flights;
+                    displayFlights(data.flights);
+                    document.getElementById('resultsSection').style.display = 'block';
+                    document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    showNotification('No flights found for your search criteria.', 'info');
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                showNotification('Error searching flights. Please try again.', 'error');
+            }
+        }
+
+        // Display flight results
+        function displayFlights(flights) {
+            const resultsContainer = document.getElementById('flightResults');
+            resultsContainer.innerHTML = '';
+            
+            flights.forEach(flight => {
+                const flightCard = document.createElement('div');
+                flightCard.className = 'flight-card';
+                
+                const departureTime = new Date(flight.departure_time).toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                });
+                const arrivalTime = new Date(flight.arrival_time).toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                });
+                
+                flightCard.innerHTML = `
+                    <div class="flight-header">
+                        <div class="flight-info">
+                            <div class="airline-logo">${flight.airline?.code || 'XX'}</div>
+                            <div class="flight-details">
+                                <h3>${flight.flight_number}</h3>
+                                <p>${flight.airline?.name || 'Airline'}</p>
+                            </div>
+                        </div>
+                        <div class="price-section">
+                            <div class="price">₹${flight.current_price.toFixed(0)}</div>
+                            <div class="price-breakdown">per passenger</div>
+                            <button class="book-btn" onclick="openBookingModal(${flight.id})">
+                                <i class="fas fa-shopping-cart"></i> Book Now
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flight-route">
+                        <div class="route-info">
+                            <div class="airport">
+                                <div class="airport-code">${flight.departure_airport.code}</div>
+                                <div class="airport-name">${flight.departure_airport.name}</div>
+                                <div class="time">${departureTime}</div>
+                            </div>
+                            
+                            <div class="route-line">
+                                <div class="flight-duration">${flight.duration} min</div>
+                                <div class="route-arrow">→</div>
+                            </div>
+                            
+                            <div class="airport">
+                                <div class="airport-code">${flight.arrival_airport.code}</div>
+                                <div class="airport-name">${flight.arrival_airport.name}</div>
+                                <div class="time">${arrivalTime}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                resultsContainer.appendChild(flightCard);
+            });
+        }
+
+        // Open booking modal
+        async function openBookingModal(flightId) {
+            selectedFlight = currentFlights.find(f => f.id === flightId);
+            if (!selectedFlight) return;
+            
+            // Get pricing for selected seat class
+            const seatClass = document.getElementById('selectedSeatClass').value;
+            try {
+                const response = await fetch(`${API_BASE_URL}/pricing/flight/${flightId}/class/${seatClass}`);
+                currentPricing = await response.json();
+                updatePriceDetails();
+            } catch (error) {
+                console.error('Error fetching pricing:', error);
+                // Use base price if pricing service fails
+                currentPricing = {
+                    base_price: selectedFlight.current_price,
+                    total_price: selectedFlight.current_price
+                };
+                updatePriceDetails();
+            }
+            
+            document.getElementById('bookingModal').style.display = 'block';
+        }
+
+        // Update price details
+        function updatePriceDetails() {
+            if (!currentPricing) return;
+            
+            const priceDetails = document.getElementById('priceDetails');
+            priceDetails.innerHTML = `
+                <div class="price-item">
+                    <span>Base Price:</span>
+                    <span>₹${currentPricing.base_price.toFixed(0)}</span>
+                </div>
+                <div class="price-item">
+                    <span>Total Price:</span>
+                    <span>₹${currentPricing.total_price.toFixed(0)}</span>
+                </div>
+            `;
+        }
+
+        // Handle booking submission
+        async function handleBooking(event) {
+            event.preventDefault();
+            
+            if (!selectedFlight || !currentPricing) {
+                showNotification('Please select a flight first.', 'error');
+                return;
+            }
+            
+            const formData = new FormData(event.target);
+            const bookingData = {
+                flight_id: selectedFlight.id,
+                passenger_name: formData.get('passengerName') || document.getElementById('passengerName').value,
+                passenger_email: formData.get('passengerEmail') || document.getElementById('passengerEmail').value,
+                passenger_phone: formData.get('passengerPhone') || document.getElementById('passengerPhone').value,
+                seat_class: document.getElementById('selectedSeatClass').value
+            };
+            
+            try {
+                // Store booking data for payment
+                localStorage.setItem('bookingData', JSON.stringify({
+                    flight: selectedFlight,
+                    passengers: document.getElementById('passengerCount').value,
+                    seatClass: document.getElementById('selectedSeatClass').value,
+                    price: currentPricing.total_price,
+                    finalPrice: currentPricing.total_price,
+                    passengerName: bookingData.passenger_name,
+                    passengerEmail: bookingData.passenger_email,
+                    passengerPhone: bookingData.passenger_phone,
+                    coupon: appliedCoupon
+                }));
+                
+                showNotification('Booking details saved! Proceeding to payment...', 'success');
+                closeModal();
+                window.location.href = 'payment.html';
+            } catch (error) {
+                console.error('Booking error:', error);
+                showNotification('Error processing booking. Please try again.', 'error');
+            }
+        }
+
+        // Handle payment
+        async function handlePayment(event) {
+            event.preventDefault();
+            
+            // Simulate payment processing
+            showNotification('Payment processed successfully!', 'success');
+            closeModal();
+            
+            // Show confirmation
+            showBookingConfirmation({
+                pnr: 'PNR' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+                booking_reference: 'BK' + Math.random().toString(36).substr(2, 8).toUpperCase(),
+                passenger_name: 'John Doe',
+                passenger_email: 'john@example.com',
+                passenger_phone: '+1234567890',
+                flight_details: selectedFlight,
+                seat_class: 'economy',
+                seat_number: 'A' + Math.floor(Math.random() * 30 + 1),
+                price_paid: currentPricing.total_price,
+                booking_date: new Date().toISOString(),
+                status: 'CONFIRMED'
+            });
+        }
+
+        // Show booking confirmation
+        function showBookingConfirmation(confirmation) {
+            closeModal();
+            
+            const bookingDetails = document.getElementById('bookingDetails');
+            bookingDetails.innerHTML = `
+                <h3>Booking Confirmation</h3>
+                <div class="confirmation-details">
+                    <div class="detail-row">
+                        <span>PNR:</span>
+                        <span><strong>${confirmation.pnr}</strong></span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Booking Reference:</span>
+                        <span>${confirmation.booking_reference}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Passenger:</span>
+                        <span>${confirmation.passenger_name}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Flight:</span>
+                        <span>${confirmation.flight_details.flight_number}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Route:</span>
+                        <span>${confirmation.flight_details.departure_airport.code} → ${confirmation.flight_details.arrival_airport.code}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>Total Paid:</span>
+                        <span><strong>₹${confirmation.price_paid.toFixed(0)}</strong></span>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('confirmationModal').style.display = 'block';
+        }
+
+        // Check coupon
+        async function checkCoupon() {
+            const couponCode = document.getElementById('couponCode').value;
+            if (!couponCode) {
+                showNotification('Please enter a coupon code.', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/coupons/apply`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        code: couponCode,
+                        amount: 10000 // Example amount
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.valid) {
+                    showNotification(`Coupon applied! Discount: ₹${result.discount}`, 'success');
+                    appliedCoupon = result;
+                } else {
+                    showNotification(result.message, 'error');
+                }
+            } catch (error) {
+                showNotification('Error checking coupon.', 'error');
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.style.display = 'none';
+            });
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            // Simple notification - you can enhance this
+            alert(message);
+        }
+    </script>
+</body>
+</html>
