@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmation - Flight Booking Simulator</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .confirmation-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .confirmation-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-left: 5px solid #28a745;
+        }
+        .status-badge {
+            background: #28a745;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .detail-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .detail-label {
+            font-weight: bold;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        .detail-value {
+            font-size: 1.1em;
+            color: #333;
+        }
+        .flight-info {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .passenger-info {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .price-breakdown {
+            background: #d4edda;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            font-size: 1em;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        @media (max-width: 768px) {
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✈️ Flight Booking Simulator</h1>
+            <nav>
+                <a href="index.html">Search Flights</a>
+                <a href="payment.html">Payment</a>
+            </nav>
+        </header>
+
+        <div class="confirmation-container">
+            <div class="confirmation-card">
+                <div class="status-badge">✅ BOOKING CONFIRMED</div>
+                
+                <h2>Booking Confirmation</h2>
+                
+                <div id="confirmationDetails">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <div class="btn-group">
+                    <a href="index.html" class="btn btn-primary">Book Another Flight</a>
+                    <button class="btn btn-secondary" onclick="printConfirmation()">Print Confirmation</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let confirmationData = null;
+
+        // Load confirmation data
+        function loadConfirmationData() {
+            const data = localStorage.getItem('bookingConfirmation');
+            if (data) {
+                confirmationData = JSON.parse(data);
+                displayConfirmation();
+            } else {
+                alert('No booking confirmation found.');
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Display confirmation details
+        function displayConfirmation() {
+            if (!confirmationData) return;
+
+            const container = document.getElementById('confirmationDetails');
+            const flight = confirmationData.flight_details;
+            const bookingDate = new Date(confirmationData.booking_date);
+            const depTime = new Date(flight.departure_time);
+            const arrTime = new Date(flight.arrival_time);
+
+            container.innerHTML = `
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">PNR Number</div>
+                        <div class="detail-value">${confirmationData.pnr}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Booking Reference</div>
+                        <div class="detail-value">${confirmationData.booking_reference}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Booking Date</div>
+                        <div class="detail-value">${bookingDate.toLocaleDateString()}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Status</div>
+                        <div class="detail-value">${confirmationData.status}</div>
+                    </div>
+                </div>
+
+                <div class="flight-info">
+                    <h3>Flight Details</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Flight Number</div>
+                            <div class="detail-value">${flight.flight_number}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Airline</div>
+                            <div class="detail-value">${flight.airline.name}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Route</div>
+                            <div class="detail-value">${flight.departure_airport.code} → ${flight.arrival_airport.code}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Seat Class</div>
+                            <div class="detail-value">${confirmationData.seat_class}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Seat Number</div>
+                            <div class="detail-value">${confirmationData.seat_number}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Duration</div>
+                            <div class="detail-value">${flight.duration} minutes</div>
+                        </div>
+                    </div>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Departure</div>
+                            <div class="detail-value">
+                                <strong>${flight.departure_airport.name}</strong><br>
+                                ${depTime.toLocaleString()}
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Arrival</div>
+                            <div class="detail-value">
+                                <strong>${flight.arrival_airport.name}</strong><br>
+                                ${arrTime.toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="passenger-info">
+                    <h3>Passenger Information</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Name</div>
+                            <div class="detail-value">${confirmationData.passenger_name}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Email</div>
+                            <div class="detail-value">${confirmationData.passenger_email}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Phone</div>
+                            <div class="detail-value">${confirmationData.passenger_phone}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="price-breakdown">
+                    <h3>Payment Summary</h3>
+                    <div class="detail-item">
+                        <div class="detail-label">Total Amount Paid</div>
+                        <div class="detail-value" style="font-size: 1.5em; font-weight: bold; color: #28a745;">
+                            ₹${confirmationData.price_paid.toFixed(0)}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Print confirmation
+        function printConfirmation() {
+            window.print();
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfirmationData();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Assistant Chatbot - Flight Booking Simulator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-robot"></i> Flight Assistant</h1>
+                <p>Your AI-powered flight booking and travel assistant</p>
+            </div>
+        </header>
+
+        <main>
+            <div class="chatbot-container">
+                <!-- Chat Interface -->
+                <div class="chat-interface">
+                    <div class="chat-header">
+                        <div class="bot-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="bot-info">
+                            <h3>Flight Assistant</h3>
+                            <span class="status">Online</span>
+                        </div>
+                        <div class="chat-controls">
+                            <button class="control-btn" onclick="clearChat()">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button class="control-btn" onclick="toggleMinimize()">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message bot-message">
+                            <div class="message-avatar">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="message-content">
+                                <p>👋 Hello! I'm your Flight Assistant, here to make your travel experience smooth and easy!</p>
+                                <p>I can help you with:</p>
+                                <ul>
+                                    <li>✈️ Flight bookings and modifications</li>
+                                    <li>📋 Check-in and boarding information</li>
+                                    <li>🧳 Baggage policies and restrictions</li>
+                                    <li>⏰ Flight status and delays</li>
+                                    <li>🏢 Airport information and directions</li>
+                                    <li>💡 Travel tips and recommendations</li>
+                                </ul>
+                                <p>What would you like to do today?</p>
+                                <div class="suggestions">
+                                    <button class="suggestion-btn" onclick="selectSuggestion('I want to book a flight from Delhi to Mumbai')">I want to book a flight from Delhi to Mumbai</button>
+                                    <button class="suggestion-btn" onclick="selectSuggestion('Show me flights for next week')">Show me flights for next week</button>
+                                    <button class="suggestion-btn" onclick="selectSuggestion('I need 2 tickets for tomorrow')">I need 2 tickets for tomorrow</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-input">
+                        <div class="input-container">
+                            <input type="text" id="messageInput" placeholder="Type your message here..." onkeypress="handleKeyPress(event)">
+                            <button onclick="sendMessage()" class="send-btn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <h3>Quick Actions</h3>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="quickAction('book_flight')">
+                            <i class="fas fa-plane"></i>
+                            Book Flight
+                        </button>
+                        <button class="action-btn" onclick="quickAction('check_in')">
+                            <i class="fas fa-check-in"></i>
+                            Check-in
+                        </button>
+                        <button class="action-btn" onclick="quickAction('flight_status')">
+                            <i class="fas fa-search"></i>
+                            Flight Status
+                        </button>
+                        <button class="action-btn" onclick="quickAction('baggage')">
+                            <i class="fas fa-suitcase"></i>
+                            Baggage Info
+                        </button>
+                        <button class="action-btn" onclick="quickAction('airport_info')">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Airport Info
+                        </button>
+                        <button class="action-btn" onclick="quickAction('help')">
+                            <i class="fas fa-question-circle"></i>
+                            Help
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const chatbot = {
+            responses: {
+                'book_flight': {
+                    message: "I'd be happy to help you book a flight! Please tell me your departure and destination cities, preferred travel dates, and number of passengers.",
+                    suggestions: [
+                        "I want to book a flight from Delhi to Mumbai",
+                        "Show me flights for next week",
+                        "I need 2 tickets for tomorrow"
+                    ]
+                },
+                'check_in': {
+                    message: "I can help you with check-in! Please provide your booking reference or PNR number, and I'll assist you with the check-in process.",
+                    suggestions: [
+                        "My PNR is ABC123",
+                        "I need to check in for flight 6E5697",
+                        "What documents do I need for check-in?"
+                    ]
+                },
+                'flight_status': {
+                    message: "I can check your flight status! Please provide your flight number or booking reference.",
+                    suggestions: [
+                        "Check status for flight 6E5697",
+                        "Is my flight on time?",
+                        "Flight delay information"
+                    ]
+                },
+                'baggage': {
+                    message: "I can help with baggage information! What would you like to know about baggage policies, restrictions, or fees?",
+                    suggestions: [
+                        "What's the baggage allowance?",
+                        "Can I carry liquids?",
+                        "Baggage fees for international flights"
+                    ]
+                },
+                'airport_info': {
+                    message: "I can provide airport information! Which airport are you interested in, and what specific information do you need?",
+                    suggestions: [
+                        "Terminal information for Delhi airport",
+                        "How to reach Mumbai airport?",
+                        "Parking facilities at Bangalore airport"
+                    ]
+                },
+                'help': {
+                    message: "I'm here to help! I can assist you with flight bookings, check-ins, baggage policies, airport information, and much more. What specific help do you need?",
+                    suggestions: [
+                        "How to book a flight?",
+                        "What is the check-in process?",
+                        "Baggage weight limits"
+                    ]
+                }
+            },
+            
+            generalResponses: [
+                "I understand you're looking for flight information. Let me help you with that!",
+                "That's a great question! I can provide you with detailed information about that.",
+                "I'd be happy to assist you with your travel needs. Let me get that information for you.",
+                "I can help you with that! Please provide a bit more detail so I can give you the most accurate information.",
+                "I'm here to make your travel experience smooth! How can I assist you further?"
+            ]
+        };
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                addMessage(message, 'user');
+                input.value = '';
+                
+                // Simulate bot response with typing effect
+                setTimeout(() => {
+                    const response = getBotResponse(message);
+                    addTypingIndicator();
+                    
+                    setTimeout(() => {
+                        removeTypingIndicator();
+                        addMessageWithTyping(response.message, 'bot');
+                        
+                        if (response.suggestions) {
+                            setTimeout(() => {
+                                addSuggestions(response.suggestions);
+                            }, 500);
+                        }
+                    }, 1500);
+                }, 1000);
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function addMessage(message, sender) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            const avatar = sender === 'bot' ? 
+                '<div class="message-avatar"><i class="fas fa-robot"></i></div>' :
+                '<div class="message-avatar"><i class="fas fa-user"></i></div>';
+            
+            messageDiv.innerHTML = `
+                ${avatar}
+                <div class="message-content">
+                    <p>${message}</p>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addMessageWithTyping(message, sender) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            const avatar = sender === 'bot' ? 
+                '<div class="message-avatar"><i class="fas fa-robot"></i></div>' :
+                '<div class="message-avatar"><i class="fas fa-user"></i></div>';
+            
+            // Create unique ID for this typing text
+            const typingId = 'typing-text-' + Date.now();
+            
+            messageDiv.innerHTML = `
+                ${avatar}
+                <div class="message-content">
+                    <p id="${typingId}"></p>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Type the message character by character
+            typeMessage(message, typingId);
+        }
+
+        function typeMessage(text, elementId) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            // Clear any existing content and add typing class
+            element.textContent = '';
+            element.className = 'typing-text';
+            let index = 0;
+            
+            const typeInterval = setInterval(() => {
+                if (index < text.length) {
+                    element.textContent += text.charAt(index);
+                    index++;
+                    
+                    // Scroll to bottom as text is being typed
+                    const chatMessages = document.getElementById('chatMessages');
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                } else {
+                    clearInterval(typeInterval);
+                    // Remove the blinking cursor after typing is complete
+                    element.className = '';
+                }
+            }, 30); // Adjust speed here (lower = faster typing)
+        }
+
+        function addTypingIndicator() {
+            const chatMessages = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot-message typing-indicator';
+            typingDiv.id = 'typing-indicator';
+            
+            typingDiv.innerHTML = `
+                <div class="message-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-content">
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        function addSuggestions(suggestions) {
+            const chatMessages = document.getElementById('chatMessages');
+            const suggestionsDiv = document.createElement('div');
+            suggestionsDiv.className = 'suggestions';
+            
+            suggestionsDiv.innerHTML = suggestions.map(suggestion => 
+                `<button class="suggestion-btn" onclick="selectSuggestion('${suggestion}')">${suggestion}</button>`
+            ).join('');
+            
+            chatMessages.appendChild(suggestionsDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function selectSuggestion(suggestion) {
+            document.getElementById('messageInput').value = suggestion;
+            sendMessage();
+        }
+
+        function quickAction(action) {
+            const response = chatbot.responses[action];
+            if (response) {
+                addTypingIndicator();
+                
+                setTimeout(() => {
+                    removeTypingIndicator();
+                    addMessageWithTyping(response.message, 'bot');
+                    
+                    if (response.suggestions) {
+                        setTimeout(() => {
+                            addSuggestions(response.suggestions);
+                        }, 500);
+                    }
+                }, 1500);
+            }
+        }
+
+        function getBotResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            console.log('User message:', message);
+            console.log('Lowercase message:', lowerMessage);
+            
+            // Intelligent response system that can handle any question
+            const responses = {
+                // Flight booking and search
+                'book': "I'd be happy to help you book a flight! Please tell me your departure and destination cities, preferred travel dates, and number of passengers.",
+                'flight': "I can help you find the perfect flight! What's your travel route and preferred dates?",
+                'search': "Let me search for flights for you. Please provide your departure and destination cities.",
+                'ticket': "I can help you with tickets! How many passengers and what's your travel route?",
+                
+                // Specific routes
+                'delhi to mumbai': "Great! I can help you find flights from Delhi to Mumbai. Let me search for available flights for you.",
+                'mumbai to delhi': "Perfect! I can help you find flights from Mumbai to Delhi. What's your preferred travel date?",
+                'mubai to delhi': "Perfect! I can help you find flights from Mumbai to Delhi. What's your preferred travel date?",
+                'bangalore to delhi': "Excellent! I can help you find flights from Bangalore to Delhi. When would you like to travel?",
+                'delhi to bangalore': "I can help you find flights from Delhi to Bangalore. What's your preferred departure time?",
+                'delhi to bangalore': "I can help you find flights from Delhi to Bangalore. What's your preferred departure time?",
+                
+                // Time-related queries
+                'tomorrow': "I can help you find flights for tomorrow! What's your departure and destination cities?",
+                'next week': "I'll help you find flights for next week. What's your preferred departure city and destination?",
+                'today': "I can help you find flights for today! Please tell me your route and I'll show you available options.",
+                'morning': "I can help you find morning flights! What's your departure and destination cities?",
+                'evening': "I can help you find evening flights! What's your travel route?",
+                'night': "I can help you find night flights! What's your departure and destination?",
+                
+                // Class and service queries
+                'business class': "Excellent choice! Business class offers premium comfort, priority boarding, and enhanced services. What's your travel route?",
+                'economy': "Economy class is a great choice for budget-conscious travelers. What's your travel route?",
+                'first class': "First class offers the ultimate luxury experience! What's your travel route and dates?",
+                'premium': "Premium economy offers extra comfort and space. What's your travel route?",
+                
+                // Pricing and cost queries
+                'price': "I can help you find the best prices! Our dynamic pricing system offers competitive rates. What's your travel route?",
+                'cost': "I can help you with pricing information! What's your travel route and dates?",
+                'cheap': "I can help you find the most affordable options! What's your travel route?",
+                'expensive': "I can help you find premium options! What's your travel route and budget?",
+                'discount': "I can help you find discounts and deals! What's your travel route?",
+                'offer': "I can help you find special offers! What's your travel route and dates?",
+                
+                // Schedule and timing
+                'schedule': "I can help you find flight schedules! What's your preferred departure time and route?",
+                'time': "I can help you find flights by time! What's your preferred departure time?",
+                'departure': "I can help you with departure information! What's your flight number or route?",
+                'arrival': "I can help you with arrival information! What's your flight number or route?",
+                
+                // Check-in and boarding
+                'check-in': "I can help you with check-in! Please provide your booking reference or PNR number.",
+                'boarding': "I can help you with boarding information! What's your flight number?",
+                'gate': "I can help you find your gate! What's your flight number?",
+                'terminal': "I can help you with terminal information! What's your flight number?",
+                
+                // Baggage and luggage
+                'baggage': "I can help you with baggage information! What would you like to know about baggage policies?",
+                'luggage': "I can help you with luggage information! What's your question about luggage?",
+                'weight': "I can help you with baggage weight limits! What's your travel route?",
+                'carry-on': "I can help you with carry-on baggage information! What's your question?",
+                
+                // Airport information
+                'airport': "I can help you with airport information! Which airport are you interested in?",
+                'terminal': "I can help you with terminal information! Which airport and terminal?",
+                'parking': "I can help you with airport parking information! Which airport?",
+                'transport': "I can help you with airport transportation! Which airport are you traveling to?",
+                
+                // Flight status and delays
+                'status': "I can help you check flight status! What's your flight number?",
+                'delay': "I can help you with delay information! What's your flight number?",
+                'on-time': "I can help you check if your flight is on time! What's your flight number?",
+                'cancelled': "I can help you with cancellation information! What's your flight number?",
+                
+                // Weather and conditions
+                'weather': "I can help you with weather information for your flight! What's your route?",
+                'storm': "I can help you with weather-related flight information! What's your route?",
+                'fog': "I can help you with fog-related flight information! What's your route?",
+                
+                // Food and accommodation
+                'food': "I can help you with in-flight meal options! What's your flight route?",
+                'meal': "I can help you pre-order meals! What's your flight route?",
+                'hotel': "I can help you with hotel bookings! Which city are you traveling to?",
+                'accommodation': "I can help you with accommodation! Which city are you traveling to?",
+                
+                // Special requests
+                'wheelchair': "I can help you with wheelchair assistance! What's your flight route?",
+                'special': "I can help you with special assistance! What do you need help with?",
+                'medical': "I can help you with medical assistance! What do you need help with?",
+                'infant': "I can help you with infant travel information! What's your flight route?",
+                
+                // General help
+                'help': "I'm here to help you with all your travel needs! What would you like assistance with?",
+                'assist': "I'm here to assist you! What do you need help with?",
+                'support': "I'm here to provide support! What can I help you with?",
+                'question': "I'm here to answer your questions! What would you like to know?",
+                'information': "I can provide you with information! What do you need to know?",
+                'advice': "I can give you travel advice! What do you need advice about?",
+                'recommend': "I can recommend options for you! What are you looking for?",
+                'suggest': "I can suggest the best options! What are you looking for?"
+            };
+            
+            // Find the best matching response with improved keyword matching
+            let bestMatch = null;
+            let bestKeyword = '';
+            
+            for (const [keyword, response] of Object.entries(responses)) {
+                if (lowerMessage.includes(keyword)) {
+                    console.log('Found match for keyword:', keyword);
+                    // Prioritize longer, more specific keywords
+                    if (!bestMatch || keyword.length > bestKeyword.length) {
+                        bestMatch = response;
+                        bestKeyword = keyword;
+                        console.log('New best match:', keyword, response);
+                    }
+                }
+            }
+            
+            if (bestMatch) {
+                return {
+                    message: bestMatch,
+                    suggestions: getContextualSuggestions(bestKeyword, lowerMessage)
+                };
+            }
+            
+            // If no specific match, provide intelligent general response
+            return getIntelligentGeneralResponse(lowerMessage);
+        }
+        
+        function getContextualSuggestions(keyword, message) {
+            const suggestionMap = {
+                'book': ["Delhi to Mumbai for 2 people", "What are the cheapest options?", "I need business class tickets"],
+                'flight': ["Show me flights for tomorrow", "What are the cheapest options?", "I need business class tickets"],
+                'delhi to mumbai': ["Show me flights for tomorrow", "What are the cheapest options?", "I need business class tickets"],
+                'tomorrow': ["Delhi to Mumbai for 2 people", "What's the total cost?", "Show me the cheapest options"],
+                'business class': ["Show me business class flights from Delhi to Mumbai", "What's the price difference?", "What amenities are included?"],
+                'price': ["Show me the cheapest flights", "What's the price for Delhi to Mumbai?", "Are there any discounts available?"],
+                'schedule': ["Morning flights from Delhi", "Evening flights to Mumbai", "Show me all available times"],
+                'check-in': ["My PNR is ABC123", "I need to check in for flight 6E5697", "What documents do I need?"],
+                'baggage': ["What's the baggage allowance?", "Can I carry liquids?", "Baggage fees for international flights"],
+                'airport': ["Terminal information for Delhi airport", "How to reach Mumbai airport?", "Parking facilities at Bangalore airport"],
+                'status': ["Check status for flight 6E5697", "Is my flight on time?", "Flight delay information"],
+                'help': ["How to book a flight?", "What is the check-in process?", "Baggage weight limits"]
+            };
+            
+            return suggestionMap[keyword] || [
+                "Book a flight from Delhi to Mumbai",
+                "Show me flight schedules", 
+                "What are the baggage limits?",
+                "Help me with check-in"
+            ];
+        }
+        
+        function getIntelligentGeneralResponse(message) {
+            // Analyze the message for context clues
+            if (message.includes('?')) {
+                return {
+                    message: "That's a great question! I'd be happy to help you with that. Could you provide a bit more detail so I can give you the most accurate information?",
+                    suggestions: [
+                        "Book a flight from Delhi to Mumbai",
+                        "Show me flight schedules",
+                        "What are the baggage limits?",
+                        "Help me with check-in"
+                    ]
+                };
+            } else if (message.includes('want') || message.includes('need')) {
+                return {
+                    message: "I understand what you're looking for! Let me help you with that. Could you provide a bit more detail about your travel requirements?",
+                    suggestions: [
+                        "Book a flight from Delhi to Mumbai",
+                        "Show me flight schedules",
+                        "What are the baggage limits?",
+                        "Help me with check-in"
+                    ]
+                };
+            } else {
+                return {
+                    message: "I'm here to help you with all your travel needs! I can assist with flight bookings, check-ins, baggage information, airport details, and much more. What would you like to do?",
+                    suggestions: [
+                        "Book a flight from Delhi to Mumbai",
+                        "Show me flight schedules",
+                        "What are the baggage limits?",
+                        "Help me with check-in"
+                    ]
+                };
+            }
+        }
+
+        function clearChat() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = `
+                <div class="message bot-message">
+                    <div class="message-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content">
+                        <p>Chat cleared! How can I help you today?</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleMinimize() {
+            // Toggle chat interface visibility
+            const chatInterface = document.querySelector('.chat-interface');
+            chatInterface.classList.toggle('minimized');
+        }
+    </script>
+
+    <style>
+        .chatbot-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+
+        .chat-interface {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+
+        .chat-header {
+            background: #007bff;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .bot-avatar {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .bot-info h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .status {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .chat-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 15px;
+            align-items: flex-start;
+        }
+
+        .message-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .bot-message .message-avatar {
+            background: #007bff;
+            color: white;
+        }
+
+        .user-message .message-avatar {
+            background: #28a745;
+            color: white;
+        }
+
+        .message-content {
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-width: 80%;
+        }
+
+        .user-message {
+            flex-direction: row-reverse;
+        }
+
+        .user-message .message-content {
+            background: #007bff;
+            color: white;
+        }
+
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .suggestion-btn {
+            background: #e9ecef;
+            border: 1px solid #dee2e6;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .suggestion-btn:hover {
+            background: #007bff;
+            color: white;
+        }
+
+        /* Typing indicator styles */
+        .typing-indicator {
+            opacity: 0.8;
+        }
+
+        .typing-dots {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 10px 0;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #007bff;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes typing {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Typing text animation */
+        .typing-text {
+            border-right: 2px solid #007bff;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { border-color: #007bff; }
+            51%, 100% { border-color: transparent; }
+        }
+
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #eee;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-container input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+        }
+
+        .send-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+
+        .quick-actions {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .action-btn {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .action-btn:hover {
+            background: #007bff;
+            color: white;
+        }
+
+        .action-btn i {
+            font-size: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .chatbot-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-actions {
+                order: -1;
+            }
+        }
+    </style>
+</body>
+</html>
